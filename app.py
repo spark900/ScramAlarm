@@ -66,11 +66,25 @@ class RingingScreen(Screen):
                     id="ringing-audio-warning",
                 )
 
+# Inside your RingingScreen class in app.py
+
     def on_mount(self) -> None:
-        self._shield.__enter__()
-        self.player.start()
-        self._flash_timer = self.set_interval(0.4, self._flash_step)
-        self.query_one("#ringing-input", Input).focus()
+        self.start_time = datetime.now()
+        # Set a background reactive tick every 10 seconds to scale difficulty
+        self.set_interval(10.0, self.escalate_difficulty)
+    
+    def escalate_difficulty(self) -> None:
+        # Calculate how many 10-second intervals have passed without input
+        elapsed_seconds = (datetime.now() - self.start_time).total_seconds()
+        difficulty_multiplier = int(elapsed_seconds // 10)
+        
+        if difficulty_multiplier > 0:
+            # Scale length upward continuously based on elapsed time
+            new_length = code_length_after_snoozes(self.snooze_count) + (difficulty_multiplier * 3)
+            self.code = generate_dismissal_code(new_length)
+            # Update the visual widget representation on screen
+            if hasattr(self, "code_label"):
+                self.code_label.update(f"DISMISSAL CODE: {self.code}")
 
     def on_unmount(self) -> None:
         self._shield.__exit__()

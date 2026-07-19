@@ -1,21 +1,15 @@
 [Unit]
-Description=alarm-tui background session (attach with: tmux attach -t alarm-tui)
-Documentation=https://github.com/spark900/ScramAlarm
+Description=ScramAlarm Background Service Supervisor
 After=default.target
 
 [Service]
-# alarm-tui is a TUI: it needs a real terminal to draw into and to receive
-# the dismissal keystrokes. Rather than fighting systemd's non-interactive
-# service model, this unit starts a detached tmux session that keeps the
-# app alive in the background. The user reconnects a terminal to it with:
-#     tmux attach -t alarm-tui
-# which also works over SSH or from a dropdown scratchpad terminal.
-Type=oneshot
-RemainAfterExit=yes
+Type=simple
 Environment=TERM=xterm-256color
-ExecStartPre=-/usr/bin/tmux kill-session -t alarm-tui
-ExecStart=/usr/bin/tmux new-session -d -s alarm-tui /usr/bin/alarm-tui
-ExecStop=/usr/bin/tmux kill-session -t alarm-tui
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=ALSA_CARD=default
+WorkingDirectory=/home/artem/Projects/ScramAlarm
+ExecStart=/bin/bash -c 'source .wak-env/bin/activate && export PYTHONPATH=alarm_tui && python -m alarm_tui run'
+Restart=always
 
 [Install]
 WantedBy=default.target
